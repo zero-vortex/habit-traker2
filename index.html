@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>交互式习惯追踪看板</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #4f46e5;
+      --primary-light: #e0e7ff;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* 头部样式 */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-group h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .title-group p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.18s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background-color: #4338ca;
+    }
+
+    .btn-outline {
+      background-color: var(--card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* KPI 卡片网格 */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .kpi-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* 习惯打卡矩阵 */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .add-habit-form {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .add-habit-form input, .add-habit-form select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .add-habit-form input:focus {
+      border-color: var(--primary);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th:first-child, td:first-child {
+      text-align: left;
+      width: 240px;
+    }
+
+    th {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .habit-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* 交互式勾选按钮 */
+    .check-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 2px solid var(--border);
+      background: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: transparent;
+      font-size: 1rem;
+    }
+
+    .check-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .check-btn.completed {
+      background: var(--success);
+      border-color: var(--success);
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--warning);
+      background: #fef3c7;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .progress-bar-bg {
+      width: 100px;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: #94a3b8;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+
+    .delete-btn:hover {
+      color: var(--danger);
+    }
+
+    /* 图表双栏网格 */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+    }
+
+    /* 柱状图样式 */
+    .bar-chart {
+      height: 220px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding-top: 28px;
+      gap: 12px;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bar-value {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .bar-track {
+      width: 100%;
+      max-width: 42px;
+      height: 150px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      width: 100%;
+      background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 8px 8px 0 0;
+      transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-label {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* 连续打卡横向排行图 */
+    .streak-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .streak-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .streak-row-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .streak-bar-track {
+      width: 100%;
+      height: 12px;
+      background: #f1f5f9;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .streak-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 顶部标题与全局操作 -->
+  <header>
+    <div class="title-group">
+      <h1>🌱 每日习惯追踪看板</h1>
+      <p>记录每日微习惯，用可视化连胜曲线见证复利成长</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" onclick="resetWeek()">🔄 重置本周打卡</button>
+    </div>
+  </header>
+
+  <!-- 核心 KPI 指标卡 -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">本周综合达成率</div>
+      <div class="kpi-value">
+        <span id="kpi-weekly-rate">0%</span>
+        <span class="kpi-sub" id="kpi-weekly-fraction">0/0 次</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">当前最高连胜 (Streak)</div>
+      <div class="kpi-value">
+        <span id="kpi-max-streak">0 天</span>
+        <span class="kpi-sub">🔥 保持势头</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">今日目标进度 (周日示例)</div>
+      <div class="kpi-value">
+        <span id="kpi-today-done">0/0</span>
+        <span class="kpi-sub" id="kpi-today-rate">0%</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">满分全勤习惯数</div>
+      <div class="kpi-value">
+        <span id="kpi-perfect-count">0 个</span>
+        <span class="kpi-sub">本周 7 天全满</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 每日目标打卡矩阵 -->
+  <section class="card">
+    <div class="card-header">
+      <div class="card-title">📋 本周习惯打卡矩阵</div>
+      <div class="add-habit-form">
+        <input type="text" id="new-habit-name" placeholder="输入新习惯，如：冥想 15 分钟" />
+        <select id="new-habit-tag">
+          <option value="健康">健康</option>
+          <option value="学习">学习</option>
+          <option value="效率">效率</option>
+          <option value="生活">生活</option>
+        </select>
+        <button class="btn-primary" onclick="addHabit()">+ 添加习惯</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>习惯目标</th>
+            <th>周一</th>
+            <th>周二</th>
+            <th>周三</th>
+            <th>周四</th>
+            <th>周五</th>
+            <th>周六</th>
+            <th>周日</th>
+            <th>当前连胜</th>
+            <th>周完成率</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="habit-table-body">
+          <!-- 动态渲染行 -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 可视化分析图表 -->
+  <section class="charts-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📊 每日目标完成率趋势 (周一至周日)</div>
+      </div>
+      <div class="bar-chart" id="daily-bar-chart">
+        <!-- 动态渲染柱状图 -->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔥 习惯连续打卡排行榜 (Streak)</div>
+      </div>
+      <div class="streak-chart" id="streak-rank-chart">
+        <!-- 动态渲染横向连胜条形图 -->
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const STORAGE_KEY = 'interactive_habit_dashboard_v1';
+
+  // 默认示例数据
+  const defaultHabits = [
+    { id: 1, name: '早起饮水 500ml', tag: '健康', baseStreak: 12, days: [true, true, true, true, true, true, false] },
+    { id: 2, name: '深度阅读 30 分钟', tag: '学习', baseStreak: 5, days: [true, true, false, true, true, true, true] },
+    { id: 3, name: '有氧或力量训练', tag: '健康', baseStreak: 3, days: [true, false, true, false, true, true, false] },
+    { id: 4, name: '今日复盘与明日计划', tag: '效率', baseStreak: 8, days: [true, true, true, true, true, false, false] },
+    { id: 5, name: '23:00 前放下手机', tag: '生活', baseStreak: 2, days: [false, true, true, false, true, true, true] }
+  ];
+
+  let habits = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultHabits;
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+  }
+
+  // 计算单个习惯在本周的连续打卡天数（从最后一个已打卡日往前推算，并叠加历史连胜基数）
+  function calculateStreak(habit) {
+    let currentWeekStreak = 0;
+    let lastCheckedIndex = -1;
+    for (let i = habit.days.length - 1; i >= 0; i--) {
+      if (habit.days[i]) {
+        lastCheckedIndex = i;
+        break;
+      }
+    }
+    if (lastCheckedIndex === -1) return 0;
+
+    for (let i = lastCheckedIndex; i >= 0; i--) {
+      if (habit.days[i]) {
+        currentWeekStreak++;
+      } else {
+        break;
+      }
+    }
+    // 如果从周一就一直连续不断，则加上上周留存的 baseStreak
+    const continuesFromMonday = habit.days.slice(0, lastCheckedIndex + 1).every(Boolean);
+    return continuesFromMonday ? habit.baseStreak + currentWeekStreak : currentWeekStreak;
+  }
+
+  function toggleDay(habitId, dayIndex) {
+    const habit = habits.find(h => h.id === habitId);
+    if (habit) {
+      habit.days[dayIndex] = !habit.days[dayIndex];
+      saveData();
+      renderDashboard();
+    }
+  }
+
+  function addHabit() {
+    const nameInput = document.getElementById('new-habit-name');
+    const tagSelect = document.getElementById('new-habit-tag');
+    const name = nameInput.value.trim();
+    if (!name) return alert('请输入习惯名称！');
+
+    habits.push({
+      id: Date.now(),
+      name,
+      tag: tagSelect.value,
+      baseStreak: 0,
+      days: [false, false, false, false, false, false, false]
+    });
+
+    nameInput.value = '';
+    saveData();
+    renderDashboard();
+  }
+
+  function deleteHabit(habitId) {
+    habits = habits.filter(h => h.id !== habitId);
+    saveData();
+    renderDashboard();
+  }
+
+  function resetWeek() {
+    if (!confirm('确定要清空本周的所有打卡记录吗？')) return;
+    habits.forEach(h => {
+      h.days = [false, false, false, false, false, false, false];
+    });
+    saveData();
+    renderDashboard();
+  }
+
+  function renderDashboard() {
+    const tbody = document.getElementById('habit-table-body');
+    tbody.innerHTML = '';
+
+    let totalChecks = 0;
+    const totalPossible = habits.length * 7;
+    let maxStreak = 0;
+    let perfectHabits = 0;
+
+    habits.forEach(habit => {
+      const doneCount = habit.days.filter(Boolean).length;
+      totalChecks += doneCount;
+      if (doneCount === 7) perfectHabits++;
+
+      const streak = calculateStreak(habit);
+      if (streak > maxStreak) maxStreak = streak;
+
+      const rate = Math.round((doneCount / 7) * 100);
+
+      const tr = document.createElement('tr');
+      const dayCells = habit.days.map((done, idx) => `
+        <td>
+          <button class="check-btn ${done ? 'completed' : ''}" onclick="toggleDay(${habit.id}, ${idx})" title="${DAYS[idx]}">
+            ✓
+          </button>
+        </td>
+      `).join('');
+
+      tr.innerHTML = `
+        <td>
+          <div class="habit-info">
+            <span class="tag">${habit.tag}</span>
+            <strong>${habit.name}</strong>
+          </div>
+        </td>
+        ${dayCells}
+        <td><span class="streak-badge">🔥 ${streak} 天</span></td>
+        <td>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${rate}%"></div>
+          </div>
+          <span style="font-size: 0.8rem; font-weight: 600;">${rate}%</span>
+        </td>
+        <td>
+          <button class="delete-btn" onclick="deleteHabit(${habit.id})">删除</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // 更新顶部 KPI
+    const weeklyRate = totalPossible > 0 ? Math.round((totalChecks / totalPossible) * 100) : 0;
+    document.getElementById('kpi-weekly-rate').textContent = `${weeklyRate}%`;
+    document.getElementById('kpi-weekly-fraction').textContent = `${totalChecks}/${totalPossible} 次`;
+    document.getElementById('kpi-max-streak').textContent = `${maxStreak} 天`;
+
+    const todayIdx = 6; // 默认展示周日或最后一天汇总
+    const todayDone = habits.filter(h => h.days[todayIdx]).length;
+    const todayRate = habits.length > 0 ? Math.round((todayDone / habits.length) * 100) : 0;
+    document.getElementById('kpi-today-done').textContent = `${todayDone}/${habits.length}`;
+    document.getElementById('kpi-today-rate').textContent = `${todayRate}%`;
+    document.getElementById('kpi-perfect-count').textContent = `${perfectHabits} 个`;
+
+    renderCharts(maxStreak);
+  }
+
+  function renderCharts(maxStreak) {
+    // 1. 渲染每日完成率柱状图
+    const barChart = document.getElementById('daily-bar-chart');
+    barChart.innerHTML = '';
+
+    DAYS.forEach((dayName, dayIdx) => {
+      const doneCount = habits.filter(h => h.days[dayIdx]).length;
+      const pct = habits.length > 0 ? Math.round((doneCount / habits.length) * 100) : 0;
+
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.innerHTML = `
+        <div class="bar-value">${pct}%</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="height: ${pct}%"></div>
+        </div>
+        <div class="bar-label">${dayName}</div>
+      `;
+      barChart.appendChild(col);
+    });
+
+    // 2. 渲染连续打卡排行图
+    const streakChart = document.getElementById('streak-rank-chart');
+    streakChart.innerHTML = '';
+
+    const sortedHabits = [...habits]
+      .map(h => ({ ...h, currentStreak: calculateStreak(h) }))
+      .sort((a, b) => b.currentStreak - a.currentStreak);
+
+    const upperBound = Math.max(maxStreak, 14);
+
+    sortedHabits.forEach(h => {
+      const widthPct = Math.min(100, Math.round((h.currentStreak / upperBound) * 100));
+      const row = document.createElement('div');
+      row.className = 'streak-row';
+      row.innerHTML = `
+        <div class="streak-row-header">
+          <span>${h.name}</span>
+          <span style="color: #d97706;">🔥 ${h.currentStreak} 天</span>
+        </div>
+        <div class="streak-bar-track">
+          <div class="streak-bar-fill" style="width: ${widthPct}%"></div>
+        </div>
+      `;
+      streakChart.appendChild(row);
+    });
+  }
+
+  // 初始化渲染
+  renderDashboard();
+</script>
+
+</body>
+</html>
